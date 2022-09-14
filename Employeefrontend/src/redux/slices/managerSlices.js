@@ -87,6 +87,29 @@ export const addEmployee=createAsyncThunk('manager/add-employee',async(employee,
        return rejectWithValue(error?.response.data);
     }
     });
+    // updateEmployee
+export const updateEmployee=createAsyncThunk('manager/update-employee',async(employee,{rejectWithValue,getState,dispatch})=>{
+    const users=getState()?.users;
+    const {userAuth}=users;
+    console.log(userAuth?.token);
+   
+    const config ={
+        headers:{
+           Authorization:'Bearer '+userAuth?.token
+        }
+       }
+    try {
+        console.log(employee);
+        const {data} =await axios.put(`http://localhost:8080/api/employee/updateEmployee/${employee?.id}`,employee?.data,config);
+        //saving token to localstorage
+        return data;
+    } catch (error) {
+       if(!error?.response ){
+        throw error;
+       } 
+       return rejectWithValue(error?.response.data);
+    }
+    });
     // delete Employee
 export const deleteEmployee=createAsyncThunk('manager/delete-employee',async(employeeId,{rejectWithValue,getState,dispatch})=>{
     const users=getState()?.users;
@@ -121,6 +144,27 @@ export const deleteEmployee=createAsyncThunk('manager/delete-employee',async(emp
            return rejectWithValue(error?.response.data);
         }
         });
+        export const getEmployee=createAsyncThunk('manager/employee-details',async(employeeId,{rejectWithValue,getState,dispatch})=>{
+            const users=getState()?.users;
+            const {userAuth}=users;
+            console.log(userAuth?.token);
+            console.log(employeeId);
+            const config ={
+                headers:{
+                   Authorization:'Bearer '+userAuth?.token
+                }
+               }
+            try {
+                const {data} =await axios.get(`http://localhost:8080/api/employee/${employeeId}`,config);
+              
+                return data;
+            } catch (error) {
+               if(!error?.response ){
+                throw error;
+               } 
+               return rejectWithValue(error?.response.data);
+            }
+            });      
     
 
 
@@ -235,6 +279,42 @@ builder.addCase(logoutManager.fulfilled,(state,action)=>{
 });
 
 builder.addCase(logoutManager.rejected,(state,action)=>{
+    state.loading = false;
+    state.appErr=action?.payload?.message;
+    state.serverErr=action?.error?.message;
+});
+// employee details
+builder.addCase(getEmployee.pending,(state,action)=>{
+    state.loading = true;
+    state.appErr=undefined;
+    state.serverErr=undefined;
+});
+builder.addCase(getEmployee.fulfilled,(state,action)=>{
+    state.loading = false;
+    state.employeeDetails=action?.payload;
+    state.appErr=undefined;
+    state.serverErr=undefined;
+});
+
+builder.addCase(getEmployee.rejected,(state,action)=>{
+    state.loading = false;
+    state.appErr=action?.payload?.message;
+    state.serverErr=action?.error?.message;
+});
+// update Employee
+builder.addCase(updateEmployee.pending,(state,action)=>{
+    state.loading = true;
+    state.appErr=undefined;
+    state.serverErr=undefined;
+});
+builder.addCase(updateEmployee.fulfilled,(state,action)=>{
+    state.loading = false;
+    state.employeeUpdated=action?.payload;
+    state.appErr=undefined;
+    state.serverErr=undefined;
+});
+
+builder.addCase(updateEmployee.rejected,(state,action)=>{
     state.loading = false;
     state.appErr=action?.payload?.message;
     state.serverErr=action?.error?.message;

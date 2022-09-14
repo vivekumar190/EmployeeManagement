@@ -3,11 +3,20 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Table, Row, Col, Tooltip, User, Text ,Button, Grid, Spacer,Modal,useModal,Input,Loading,Popover} from "@nextui-org/react";
 import { Link, Navigate } from "react-router-dom";
 import Moment from 'react-moment';
-import { addEmployee, dashboardManager, deleteEmployee, logoutManager } from '../redux/slices/managerSlices';
+import { addEmployee, dashboardManager, deleteEmployee, getEmployee, logoutManager, updateEmployee } from '../redux/slices/managerSlices';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
 const formSchema=Yup.object({
+  firstName:Yup.string().required('first name required'),
+  lastName:Yup.string().required('last name required'),
+  city:Yup.string().required('city required'),
+  mobile:Yup.string().required('password is definetly required'),
+  dob:Yup.string().required('dob required'),
+  address:Yup.string().required('address required'),
+  empId:Yup.string().required('comapny name required')
+});
+const updateformSchema=Yup.object({
   firstName:Yup.string().required('first name required'),
   lastName:Yup.string().required('last name required'),
   city:Yup.string().required('city required'),
@@ -24,22 +33,20 @@ const Home = () => {
 
 
       const user=useSelector(state=>state?.users);
-      const {userAuth,loading,employeeAdded,employeeDeleted,appErr,serverErr}=user;
+      const {userAuth,loading,employeeAdded,employeeDeleted,appErr,serverErr,employeeDetails,employeeUpdated}=user;
       const emplyeedata=useSelector(state=>state?.users?.dashboardData);
       // const {loading,appErr,serverErr,employees}=emplyeedata;
       useEffect(()=>{
         dispatch(dashboardManager());
-        },[dispatch,employeeAdded,employeeDeleted]);
+        },[dispatch,employeeAdded,employeeDeleted,employeeUpdated,employeeDetails]);
 
 // add new employee MODAL
       const { setVisible, bindings } = useModal();
-const clickhandler=(employee)=>{
+const clickhandler=()=>{
   setVisible(true);
- console.log(employee);
 }
 // UPDATE EMPLOYEE MODAL
 const [visible, setVisibles] = React.useState(false);
-const [employee, setEmployee] = React.useState();
 const handler = () => setVisibles(true);
 const closeHandler = () => {
   setVisibles(false);
@@ -62,18 +69,19 @@ const closeHandler = () => {
         validationSchema:formSchema
 });
 const updateformik=useFormik({
+  enableReinitialize: true,
   initialValues:{
-    firstName:'',
-    lastName:'',
-    city:'',
-    mobile:'',
-    dob:'',
-    address:'',
-    empId:''
+    firstName:employeeDetails?.firstName,
+    lastName:employeeDetails?.lastName,
+    city:employeeDetails?.city,
+    mobile:employeeDetails?.mobile,
+    dob:employeeDetails?.dob,
+    address:employeeDetails?.address,
+    empId:employeeDetails?.empId,
   },
   onSubmit:(values)=>{
-  console.log(values);
- 
+ dispatch(updateEmployee({data:values,id:employeeDetails?._id}));
+  ;
   },
   validationSchema:formSchema
 });
@@ -136,11 +144,11 @@ if(!userAuth){
       <Table.Body>
         {emplyeedata?.employees?.map(employee=>{return (
              <Table.Row key={employee?.id}>
-             <Table.Cell>{employee?.firstName + ' ' +employee?.firstName}</Table.Cell>
+             <Table.Cell>{employee?.firstName + ' ' +employee?.lastName}</Table.Cell>
              <Table.Cell>{employee?.mobile}</Table.Cell>
              <Table.Cell><Moment format="YYYY/MM/DD">{employee?.createdAt}</Moment></Table.Cell>
              <Table.Cell>{employee?.empId}</Table.Cell>
-             <Table.Cell><Grid.Container><Grid><Button color="warning" auto flat onClick={handler}>Update Employee</Button></Grid><Spacer/><Grid> <Popover>
+             <Table.Cell><Grid.Container><Grid><Button color="warning" auto flat onClick={()=>(dispatch(getEmployee(employee?._id)),handler())}>Update Employee</Button></Grid><Spacer/><Grid> <Popover>
           <Popover.Trigger>
             <Button color="error" auto flat >Delete Employee</Button>
           </Popover.Trigger>
@@ -211,7 +219,7 @@ if(!userAuth){
             helperText={formik.touched.firstName && formik.errors.firstName}
           clearable
           label="First Name"
-          placeholder=''
+          placeholder='Enter your first name'
           color="default"
         />
             </Grid>
@@ -397,13 +405,14 @@ if(!userAuth){
               </Grid>
               <Grid>
               <Input
+             
            value={updateformik.values.empId}
            onChange={updateformik.handleChange("empId")}
            onBlur={updateformik.handleBlur("empId")}
            helperText={updateformik.touched.empId && updateformik.errors.empId}
-           clearable
+       
            label="Employee ID"
-          placeholder="Enter Address"
+          placeholder={employeeDetails?.empId}
           color="default"
         />
               </Grid>
@@ -447,7 +456,7 @@ if(!userAuth){
           <Button auto flat color="error" onClick={closeHandler}>
             Close
           </Button>
-         
+          {appErr|| serverErr?   <Text  color="error">{serverErr}-{appErr}</Text>:null}
         </Modal.Footer>
       </Modal>
     </div>

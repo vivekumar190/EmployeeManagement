@@ -23,7 +23,7 @@ const updateEmployee=asyncHandler(
     async(req,res)=>{
     
         try {
-            if(!req.body.empId || !req.body.firstName || !req.body.lastName || !req.body.mobile || !req.body.dob || !req.body.address || !req.body.city ){
+            if( !req.body.firstName || !req.body.lastName || !req.body.mobile || !req.body.dob || !req.body.address || !req.body.city ){
                 throw new Error("Please enter all the detials");
             }
             if(!req.user){
